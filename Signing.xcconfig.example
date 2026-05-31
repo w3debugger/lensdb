@@ -1,0 +1,7 @@
+// Copy this file to `Signing.xcconfig` and set your own Apple Developer Team ID,
+// then run `xcodegen generate`. The real `Signing.xcconfig` is gitignored, so your
+// Team ID never gets committed. Leave it blank to build unsigned.
+//
+//   cp Signing.xcconfig.example Signing.xcconfig
+//
+DEVELOPMENT_TEAM =

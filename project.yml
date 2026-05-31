@@ -1,0 +1,43 @@
+# XcodeGen spec. Regenerate the .xcodeproj after editing with:  xcodegen generate
+name: LensDB
+options:
+  deploymentTarget:
+    macOS: "14.4"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    # DEVELOPMENT_TEAM is intentionally NOT here — it comes from the gitignored
+    # Signing.xcconfig (see Signing.xcconfig.example) so it stays out of the repo.
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_STRICT_CONCURRENCY: minimal
+
+targets:
+  LensDB:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.4"
+    configFiles:
+      Debug: Signing.xcconfig
+      Release: Signing.xcconfig
+    sources:
+      - Sources/LensDB
+      - Resources/Assets.xcassets
+    settings:
+      base:
+        # Reverse-DNS of the GitHub Pages domain (w3debugger.github.io).
+        PRODUCT_BUNDLE_IDENTIFIER: "io.github.w3debugger.lensdb"
+        PRODUCT_NAME: "LensDB"
+        GENERATE_INFOPLIST_FILE: YES
+        # Hardened runtime is required for notarization. No App Sandbox on purpose:
+        # the app shells out to the psql/mysql clients and connects to arbitrary
+        # hosts, which the sandbox would block.
+        ENABLE_HARDENED_RUNTIME: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        COMBINE_HIDPI_IMAGES: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.developer-tools"
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 LensDB"
+        INFOPLIST_KEY_CFBundleDisplayName: "LensDB"
