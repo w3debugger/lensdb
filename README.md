@@ -99,3 +99,7 @@ Sources/LensDB/
   Models.swift             data types + connection settings (+ URL parsing)
   JSON.swift               order-preserving JSON parser
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
