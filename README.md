@@ -100,6 +100,11 @@ Sources/LensDB/
   JSON.swift               order-preserving JSON parser
 ```
 
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) to get set up
+and build, and please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - run: brew install xcodegen
+
+      - name: Prepare signing config
+        run: cp Signing.xcconfig.example Signing.xcconfig
+
+      - run: xcodegen generate
+
+      - name: Build
+        run: xcodebuild -project LensDB.xcodeproj -scheme LensDB -configuration Debug -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO build
