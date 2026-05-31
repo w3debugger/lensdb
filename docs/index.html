@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LensDB · native macOS database browser and editor</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="theme-color" content="#07191a" />
+    <meta
+      name="description"
+      content="LensDB is a fast, native macOS app for browsing and editing local and cloud PostgreSQL and MySQL databases. Inline cell editing, multiple connections at once, light and dark, under 1 MB, zero dependencies."
+    />
+    <meta property="og:title" content="LensDB · see your databases clearly" />
+    <meta
+      property="og:description"
+      content="A featherweight native macOS database browser and editor for PostgreSQL and MySQL. Local and cloud, many connections at once, light and dark."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://w3debugger.github.io/lensdb-macos-swift/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://w3debugger.github.io/lensdb-macos-swift/og-image.png" />
+
+    <style>
+      :root {
+        /* Palette pulled from the app logo: gold on deep teal-petrol. */
+        --bg: #07191a;
+        --bg-2: #0a2122;
+        --panel: #0e272a;
+        --panel-2: #123133;
+        --border: #22423f;
+        --text: #c7d2cd;
+        --text-dim: #84968f;
+        --heading: #f5efe2;
+        --accent: #e0b766;
+        --accent-2: #3fb59a;
+        --null: #6f817b;
+        --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, sans-serif;
+        --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+        --maxw: 1080px;
+        --radius: 16px;
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        font-size: 17px;
+        line-height: 1.6;
+        color: var(--text);
+        background: var(--bg);
+        background-image:
+          radial-gradient(1200px 600px at 80% -10%, rgba(224, 183, 102, 0.1), transparent 60%),
+          radial-gradient(900px 500px at 0% 0%, rgba(63, 181, 154, 0.12), transparent 55%);
+        background-repeat: no-repeat;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      h1, h2, h3 { color: var(--heading); line-height: 1.15; letter-spacing: -0.02em; margin: 0; }
+      p { margin: 0; }
+      a { color: var(--accent); text-decoration: none; }
+      code {
+        font-family: var(--mono); font-size: 0.86em;
+        background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+        border-radius: 6px; padding: 0.1em 0.4em; color: #ecd9a8;
+      }
+      .container { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+      .btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-weight: 600; font-size: 15px; color: #231a06;
+        background: linear-gradient(135deg, #ead08a, #cf9f44);
+        border: 1px solid transparent; border-radius: 10px; padding: 9px 16px;
+        cursor: pointer;
+        transition: transform 0.12s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      }
+      .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(224, 183, 102, 0.3); }
+      .btn-sm { padding: 7px 14px; font-size: 14px; }
+      .btn-lg { padding: 13px 22px; font-size: 16px; border-radius: 12px; }
+      .btn-ghost { background: transparent; color: var(--heading); border-color: var(--border); }
+      .btn-ghost:hover { border-color: var(--accent); box-shadow: none; }
+
+      /* Logo & nav */
+      .logo { display: inline-flex; align-items: center; gap: 9px; font-size: 19px; color: var(--heading); }
+      .logo-mark { width: 28px; height: 28px; border-radius: 7px; display: block; }
+      .logo b { font-weight: 700; letter-spacing: -0.01em; }
+      .nav {
+        position: sticky; top: 0; z-index: 20;
+        backdrop-filter: saturate(160%) blur(12px);
+        background: rgba(7, 25, 26, 0.72); border-bottom: 1px solid var(--border);
+      }
+      .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+      .nav-links { display: flex; align-items: center; gap: 26px; }
+      .nav-links a { color: var(--text-dim); font-size: 15px; font-weight: 500; }
+      .nav-links a:hover { color: var(--heading); }
+      .nav-links a.btn { color: #231a06; }
+
+      /* Hero */
+      .hero { padding: 72px 0 40px; }
+      .hero-logo {
+        display: block; width: 104px; height: 104px; margin-bottom: 22px;
+        border-radius: 22px; filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45));
+      }
+      .hero-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+      .eyebrow {
+        display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+        text-transform: uppercase; color: var(--accent);
+        background: rgba(224, 183, 102, 0.1); border: 1px solid rgba(224, 183, 102, 0.28);
+        border-radius: 999px; padding: 5px 12px; margin-bottom: 20px;
+      }
+      .hero h1 { font-size: clamp(36px, 5vw, 56px); font-weight: 800; }
+      .lead { margin-top: 18px; font-size: 18px; color: var(--text-dim); max-width: 30em; }
+      .lead b { color: var(--text); }
+      .cta-row { display: flex; gap: 14px; margin-top: 28px; flex-wrap: wrap; }
+      .cta-row.center { justify-content: center; }
+      .fineprint { margin-top: 16px; font-size: 13.5px; color: var(--null); }
+
+      /* App mockup */
+      .hero-art { perspective: 1600px; }
+      .mock {
+        border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+        background: var(--panel);
+        box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+        transform: rotateY(-9deg) rotateX(3deg); transition: transform 0.4s ease; font-size: 12px;
+      }
+      .mock:hover { transform: rotateY(0deg) rotateX(0deg); }
+      .mock-titlebar {
+        display: flex; align-items: center; gap: 7px; padding: 10px 13px;
+        background: var(--panel-2); border-bottom: 1px solid var(--border);
+      }
+      .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+      .dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+      .mock-title { margin-left: 8px; color: var(--text-dim); font-size: 11.5px; }
+      .mock-body { display: grid; grid-template-columns: 0.9fr 1.1fr 2.1fr; min-height: 270px; }
+      .mock-col { padding: 8px 0; border-right: 1px solid var(--border); }
+      .mock-grid { border-right: none; }
+      .mock-col-head {
+        font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+        color: var(--null); padding: 4px 12px 8px;
+      }
+      .mock-row { display: flex; align-items: center; gap: 7px; padding: 5px 12px; color: var(--text); }
+      .mock-row.sel {
+        background: linear-gradient(90deg, rgba(224, 183, 102, 0.16), rgba(63, 181, 154, 0.1));
+        box-shadow: inset 2px 0 0 var(--accent);
+      }
+      .mck-ico { color: var(--accent-2); }
+      .mck-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .mck-meta { color: var(--null); font-size: 10.5px; }
+      .mock-sql {
+        font-family: var(--mono); font-size: 11px; color: #f0dca6;
+        background: var(--bg-2); border-bottom: 1px solid var(--border);
+        padding: 9px 12px; margin: -8px 0 0; white-space: nowrap; overflow: hidden;
+      }
+      .mock-grid table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+      .mock-grid th {
+        text-align: left; color: var(--text-dim); font-weight: 600; padding: 7px 10px;
+        border-bottom: 1px solid var(--border); background: var(--panel-2);
+      }
+      .mock-grid td {
+        padding: 6px 10px; border-bottom: 1px solid rgba(34, 66, 63, 0.6); color: var(--text);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0;
+      }
+      .mock-grid td.null { color: var(--null); font-style: italic; }
+      .mock-grid tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.015); }
+
+      /* Sections */
+      .section { padding: 76px 0; }
+      .section-alt { background: var(--bg-2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+      .section-title { font-size: clamp(26px, 3.4vw, 34px); font-weight: 800; text-align: center; }
+      .section-sub { text-align: center; color: var(--text-dim); margin: 14px auto 0; max-width: 38em; }
+
+      /* Feature grid */
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 44px; }
+      .card {
+        background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 26px 24px; transition: transform 0.15s ease, border-color 0.2s ease;
+      }
+      .card:hover { transform: translateY(-3px); border-color: rgba(224, 183, 102, 0.4); }
+      .card-icon { font-size: 26px; line-height: 1; margin-bottom: 14px; }
+      .card h3 { font-size: 18px; margin-bottom: 8px; }
+      .card p { color: var(--text-dim); font-size: 15px; }
+
+      /* Steps */
+      .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 44px; }
+      .step { text-align: center; padding: 8px; }
+      .step-n {
+        width: 44px; height: 44px; margin: 0 auto 14px; display: grid; place-items: center;
+        font-weight: 800; color: #231a06;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-radius: 12px;
+      }
+      .step h3 { font-size: 17px; margin-bottom: 6px; }
+      .step p { color: var(--text-dim); font-size: 14.5px; }
+
+      /* Download */
+      .download-inner { text-align: center; }
+      .snippet {
+        margin: 30px auto 0; max-width: 560px; text-align: left; background: var(--bg-2);
+        border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; overflow-x: auto;
+      }
+      .snippet code { background: none; border: none; padding: 0; color: #f0dca6; font-size: 13.5px; line-height: 1.7; }
+
+      /* Footer */
+      .footer { border-top: 1px solid var(--border); padding: 28px 0; }
+      .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+      .footer-note { color: var(--null); font-size: 14px; }
+
+      /* Responsive */
+      @media (max-width: 880px) {
+        .hero-inner { grid-template-columns: 1fr; gap: 36px; }
+        .mock { transform: none; }
+        .grid { grid-template-columns: repeat(2, 1fr); }
+        .steps { grid-template-columns: repeat(2, 1fr); }
+      }
+      @media (max-width: 560px) {
+        .nav-links a:not(.btn) { display: none; }
+        .grid, .steps { grid-template-columns: 1fr; }
+        .hero { padding-top: 48px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="nav">
+      <div class="container nav-inner">
+        <span class="logo">
+          <img class="logo-mark" src="./lensdb-logo.png" width="28" height="28" alt="" />
+          <b>LensDB</b>
+        </span>
+        <nav class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="https://github.com/w3debugger/lensdb-macos-swift/releases/latest/download/LensDB.dmg" class="btn btn-sm">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <div class="container hero-inner">
+          <div class="hero-copy">
+            <img class="hero-logo" src="./lensdb-logo.png" width="104" height="104" alt="LensDB logo" />
+            <span class="eyebrow">Native macOS · PostgreSQL &amp; MySQL</span>
+            <h1>See your databases clearly.</h1>
+            <p class="lead">
+              LensDB is a fast, featherweight database browser for macOS. Connect to local and
+              cloud Postgres and MySQL, many at once, click through your tables, run SQL, and edit
+              rows in place. A native app that weighs <b>under&nbsp;1&nbsp;MB</b>.
+            </p>
+            <div class="cta-row">
+              <a href="https://github.com/w3debugger/lensdb-macos-swift/releases/latest/download/LensDB.dmg" class="btn btn-lg">Download for macOS</a>
+              <a href="#features" class="btn btn-ghost btn-lg">See features</a>
+            </div>
+            <p class="fineprint">macOS 14.4+ · Apple&nbsp;Silicon · no telemetry</p>
+          </div>
+          <div class="hero-art">
+            <div class="mock" aria-hidden="true">
+              <div class="mock-titlebar">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="mock-title">LensDB · shop</span>
+              </div>
+              <div class="mock-body">
+                <div class="mock-col mock-dbs">
+                  <div class="mock-col-head">Databases</div>
+                  <div class="mock-row sel"><span class="mck-name">shop</span><span class="mck-meta">82 MB</span></div>
+                  <div class="mock-row"><span class="mck-name">analytics</span><span class="mck-meta">210 MB</span></div>
+                  <div class="mock-row"><span class="mck-name">billing</span><span class="mck-meta">44 MB</span></div>
+                  <div class="mock-row"><span class="mck-name">blog</span><span class="mck-meta">9.2 MB</span></div>
+                  <div class="mock-row"><span class="mck-name">inventory</span><span class="mck-meta">31 MB</span></div>
+                </div>
+                <div class="mock-col mock-tables">
+                  <div class="mock-col-head">public</div>
+                  <div class="mock-row sel"><span class="mck-ico">▦</span><span class="mck-name">orders</span><span class="mck-meta">~18,934</span></div>
+                  <div class="mock-row"><span class="mck-ico">▦</span><span class="mck-name">customers</span><span class="mck-meta">~4,821</span></div>
+                  <div class="mock-row"><span class="mck-ico">▦</span><span class="mck-name">products</span><span class="mck-meta">~312</span></div>
+                  <div class="mock-row"><span class="mck-ico">▦</span><span class="mck-name">payments</span><span class="mck-meta">~17,890</span></div>
+                  <div class="mock-row"><span class="mck-ico">▦</span><span class="mck-name">categories</span><span class="mck-meta">~28</span></div>
+                </div>
+                <div class="mock-col mock-grid">
+                  <div class="mock-sql">SELECT * FROM "public"."orders" LIMIT 200</div>
+                  <table>
+                    <thead>
+                      <tr><th>id</th><th>customer_id</th><th>status</th><th>total</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>1001</td><td>248</td><td>paid</td><td>$129.00</td></tr>
+                      <tr><td>1002</td><td>591</td><td>shipped</td><td>$58.50</td></tr>
+                      <tr><td>1003</td><td>133</td><td>refunded</td><td>$74.25</td></tr>
+                      <tr><td>1004</td><td>877</td><td>pending</td><td class="null">NULL</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section id="features" class="section">
+        <div class="container">
+          <h2 class="section-title">Everything you need, nothing you don't</h2>
+          <p class="section-sub">A focused tool that does one thing well, and stays out of your way.</p>
+          <div class="grid">
+            <div class="card">
+              <div class="card-icon">🪶</div>
+              <h3>Native &amp; featherweight</h3>
+              <p>Pure SwiftUI. A single sub-1 MB binary, with no Electron and no bundled runtime. It launches instantly and sips memory.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">🐘</div>
+              <h3>PostgreSQL &amp; MySQL</h3>
+              <p>One app, both engines. Flip between them with a click: same browsing, same SQL field, same keyboard shortcuts.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">☁️</div>
+              <h3>Local &amp; cloud, together</h3>
+              <p>Open as many connections as you like: local Unix sockets and cloud URLs (Neon, Supabase, RDS, PlanetScale) side by side, grouped into collapsible sections. SSL ready.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">🔌</div>
+              <h3>Zero dependencies</h3>
+              <p>It drives the psql / mysql clients you already have. Nothing to link, no drivers to download, nothing to keep updated.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">⌘</div>
+              <h3>Browse or query</h3>
+              <p>Click through schemas and tables, or drop into the editable SQL field and run anything with ⌘↩. Paging built in.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">✏️</div>
+              <h3>Edit in place</h3>
+              <p>Double-click a cell to change it, or add new rows, then hit Save. LensDB writes the UPDATE / INSERT for you and matches rows by primary key. Nothing is written until you save.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">🎯</div>
+              <h3>Faithful results</h3>
+              <p>Exact bigints, decimals, NULLs, and JSON columns. Values round-trip as JSON, never lossily coerced to floats.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">🌓</div>
+              <h3>Light &amp; dark</h3>
+              <p>Follows your Mac automatically, or switch to Light or Dark with one click. Sidebar, tables, and results all change instantly.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section id="how" class="section section-alt">
+        <div class="container">
+          <h2 class="section-title">From zero to browsing in seconds</h2>
+          <div class="steps">
+            <div class="step">
+              <div class="step-n">1</div>
+              <h3>Pick an engine</h3>
+              <p>PostgreSQL or MySQL, from the connection panel.</p>
+            </div>
+            <div class="step">
+              <div class="step-n">2</div>
+              <h3>Connect</h3>
+              <p>Local socket, host / port / user, or a pasted connection URL. Add as many as you need.</p>
+            </div>
+            <div class="step">
+              <div class="step-n">3</div>
+              <h3>Browse</h3>
+              <p>Databases → tables → rows, grouped by schema with row counts.</p>
+            </div>
+            <div class="step">
+              <div class="step-n">4</div>
+              <h3>Query &amp; edit</h3>
+              <p>Tweak the generated SELECT or write your own (⌘↩), and double-click cells to edit. Save writes it back.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Download -->
+      <section id="download" class="section download">
+        <div class="container download-inner">
+          <h2 class="section-title">Get LensDB</h2>
+          <p class="section-sub">A notarized macOS DMG, or build it from source. Your call.</p>
+          <div class="cta-row center">
+            <a href="https://github.com/w3debugger/lensdb-macos-swift/releases/latest/download/LensDB.dmg" class="btn btn-lg">Download for macOS</a>
+            <a href="https://github.com/w3debugger/lensdb-macos-swift" target="_blank" rel="noopener" class="btn btn-ghost btn-lg">Build from source</a>
+          </div>
+          <pre class="snippet"><code>git clone https://github.com/w3debugger/lensdb-macos-swift.git
+cd lensdb-macos-swift &amp;&amp; ./build.sh &amp;&amp; open LensDB.app</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span class="logo">
+          <img class="logo-mark" src="./lensdb-logo.png" width="28" height="28" alt="" />
+          <b>LensDB</b>
+        </span>
+        <span class="footer-note">Native macOS database browser · © 2026 LensDB</span>
+      </div>
+    </footer>
+  </body>
+</html>
