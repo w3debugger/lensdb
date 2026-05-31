@@ -10,7 +10,7 @@ Please report security vulnerabilities privately. Do not open a public issue for
 
 You can report a vulnerability in either of these ways:
 
-- Via GitHub's private security advisories: https://github.com/w3debugger/lensdb-macos-swift/security/advisories/new
+- Via GitHub's private security advisories: https://github.com/w3debugger/lensdb/security/advisories/new
 - By email to w3debugger@gmail.com
 
 You can expect an acknowledgement within a few days.
